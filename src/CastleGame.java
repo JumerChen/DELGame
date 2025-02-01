@@ -1,58 +1,86 @@
-import java.io.*;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class CastleGame {
-    public static void main(String[] args) {
-        // 1. 初始化游戏状态
-        GameState state = new GameState();
-        state.initialize();
+    private GameState gameState;
+    private JTextArea outputArea;
+    private JTextField inputField;
+    private JButton submitButton;
 
-        // 2. 主游戏循环
-        while (!state.isGameOver()) {
-            // 获取玩家输入
-            String playerAction = state.getPlayerInput();
+    public CastleGame() {
+        gameState = new GameState();
+        gameState.initialize();
 
-            // 将玩家行为翻译为SMCDEL查询
-            String smcdelQuery = state.translateToSMCDEL(playerAction);
+        // 创建 Swing 界面
+        JFrame frame = new JFrame("Castle Game - 暴风雨之夜");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+        frame.setLayout(new BorderLayout());
 
-            // 调用SMCDEL工具并获取结果
-            String smcdelOutput = callSMCDEL(smcdelQuery);
+        // 输出区域
+        outputArea = new JTextArea();
+        outputArea.setEditable(false);
+        outputArea.setLineWrap(true);
+        outputArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        frame.add(scrollPane, BorderLayout.CENTER);
 
-            // 解析SMCDEL输出并更新游戏状态
-            state.updateState(smcdelOutput);
+        // 输入区域
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BorderLayout());
+        inputField = new JTextField();
+        submitButton = new JButton("提交");
 
-            // 显示当前游戏状态
-            state.displayState();
-        }
+        inputPanel.add(inputField, BorderLayout.CENTER);
+        inputPanel.add(submitButton, BorderLayout.EAST);
+        frame.add(inputPanel, BorderLayout.SOUTH);
 
-        // 游戏结束
-        System.out.println("游戏结束！感谢参与。");
+        // 绑定提交按钮点击事件
+        submitButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                processInput();
+            }
+        });
+
+        // 绑定 Enter 键事件
+        inputField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                processInput();
+            }
+        });
+
+        frame.setVisible(true);
+        outputArea.append("欢迎来到古堡谋杀之夜！\n");
     }
 
-    private static String callSMCDEL(String smcdelQuery) {
-        try {
-            // 将查询写入文件
-            File queryFile = new File("GameQuery.smcdel.txt");
-            FileWriter writer = new FileWriter(queryFile);
-            writer.write(smcdelQuery);
-            writer.close();
+    private void processInput() {
+        String playerInput = inputField.getText().trim();
+        if (!playerInput.isEmpty()) {
+            outputArea.append("你输入: " + playerInput + "\n");
 
-            // 调用SMCDEL命令行工具
-            ProcessBuilder pb = new ProcessBuilder("./smcdel", "GameQuery.smcdel.txt");
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
+            // 调用 GameState 处理逻辑
+            String smcdelQuery = gameState.translateToSMCDEL(playerInput);
+            String smcdelOutput = gameState.callSMCDEL(smcdelQuery);
+            gameState.updateState(smcdelOutput);
 
-            // 读取SMCDEL输出
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            StringBuilder output = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
+            outputArea.append("系统回复: " + smcdelOutput + "\n");
+
+            // 清空输入框 & 重新获取焦点
+            inputField.setText("");
+            inputField.requestFocus();
+
+            // 如果游戏结束，禁用输入
+            if (gameState.isGameOver()) {
+                outputArea.append("游戏结束！感谢参与。\n");
+                inputField.setEnabled(false);
+                submitButton.setEnabled(false);
             }
-            process.waitFor();
-            return output.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Error in SMCDEL execution.";
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CastleGame());
     }
 }

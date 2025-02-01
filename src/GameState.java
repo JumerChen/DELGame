@@ -1,29 +1,25 @@
-import java.util.Scanner;
+import java.io.*;
 
 public class GameState {
     private boolean gameOver;
 
     public void initialize() {
-        // 初始化游戏变量和状态
         gameOver = false;
-        System.out.println("欢迎来到古堡谋杀之夜！");
-        // 显示初始背景
-        displayBackground();
     }
 
     public boolean isGameOver() {
         return gameOver;
     }
 
-    public String getPlayerInput() {
-        // 获取玩家的行动输入
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("请输入你的行动: ");
-        return scanner.nextLine();
-    }
-
+    /**
+     * 解析玩家输入，并转换为 SMCDEL 查询（包含完整的模型）
+     */
     public String translateToSMCDEL(String playerAction) {
-        // 定义 SMCDEL 基础部分
+        if (playerAction == null || playerAction.trim().isEmpty()) {
+            return null;
+        }
+
+        // **基础 SMCDEL 变量和规则（确保 SMCDL 可以解析）**
         String baseSMCDEL = "VARS 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15\n" +
                 "LAW\n" +
                 "  ( (1 -> ~2) & (4 -> 3) & (7 -> (6 -> ~3)) & (8 -> 1) & (9 -> ~3) & (10 -> 5) )\n" +
@@ -35,35 +31,80 @@ public class GameState {
                 "  hamilton: 6,11\n" +
                 "  stone: 3,7,12\n";
 
-        // 根据玩家输入生成查询部分
-        String query;
-        if (playerAction.equalsIgnoreCase("查询房间")) {
-            query = "TRUE?\n  {}\n  elsa knows that (1 & 8)";
-        } else if (playerAction.equalsIgnoreCase("调查死者")) {
-            query = "WHERE?\n  (15 & 3)";
-        } else {
-            query = "TRUE?\n  {}\n  stone knows whether 12";
-        }
-
-        // 拼接完整 SMCDEL 文件内容
-        return baseSMCDEL + "\n" + query;
+        // **将玩家输入解析成 SMCDEL 查询**
+        return baseSMCDEL + "\nTRUE?\n  {}\n  " + playerAction.trim();
     }
 
+    /**
+     * 运行 SMCDEL 工具，并返回推理结果
+     */
+    public String callSMCDEL(String smcdelQuery) {
+        if (smcdelQuery == null || smcdelQuery.trim().isEmpty()) {
+            return "当前逻辑公式无法被验证，请重新编辑。";
+        }
+
+        try {
+            // **1. 将完整 SMCDEL 规则写入文件**
+            File queryFile = new File("GameQuery.smcdel.txt");
+            FileWriter writer = new FileWriter(queryFile);
+            writer.write(smcdelQuery);
+            writer.close();
+
+            // **2. 调用 SMCDEL 命令行工具**
+            ProcessBuilder pb = new ProcessBuilder("./smcdel", "GameQuery.smcdel.txt");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // **3. 读取 SMCDEL 输出**
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            boolean validResponse = false;
+
+            while ((line = reader.readLine()) != null) {
+                // **去掉 SMCDEL 版本信息、ANSI 颜色代码、空行**
+                if (!line.contains("SMCDEL") && !line.contains("Doei!") && !line.trim().isEmpty()) {
+                    line = line.replaceAll("\u001B\\[[;\\d]*m", ""); // 过滤 ANSI 颜色代码
+                    output.append(line).append("\n");
+                    validResponse = true; // 说明 SMCDEL 给出了推理结果
+                }
+            }
+
+            process.waitFor();
+
+            // **4. 解析 SMCDEL 结果**
+            String smcdelOutput = output.toString().trim();
+
+            if (!validResponse) {
+                return "当前逻辑公式无法被验证，请重新编辑。";
+            }
+
+            // **检查是否是语法错误**
+            if (smcdelOutput.contains("Parse error")) {
+                return "逻辑错误，请检查格式！";
+            }
+
+            return smcdelOutput;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "发生错误：SMCDEL 运行失败，请检查你的输入。";
+        }
+    }
+
+    /**
+     * 更新游戏状态
+     */
     public void updateState(String smcdelOutput) {
-        // 解析SMCDEL输出并更新状态
-        System.out.println("SMCDEL输出: " + smcdelOutput);
+        if (smcdelOutput.contains("True")) {
+            smcdelOutput = smcdelOutput.replace("True", "该命题为真！");
+        } else if (smcdelOutput.contains("False")) {
+            smcdelOutput = smcdelOutput.replace("False", "该命题为假！");
+        }
+
+        // **检查游戏是否结束**
         if (smcdelOutput.contains("Game Over Condition")) {
             gameOver = true;
         }
-    }
-
-    public void displayState() {
-        // 显示当前游戏状态
-        System.out.println("当前游戏状态更新中...");
-    }
-
-    private void displayBackground() {
-        // 输出游戏背景故事
-        System.out.println("你身处阿尔曼德古堡，雨夜，停电，副管家离奇死亡...");
     }
 }
