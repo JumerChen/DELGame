@@ -1,25 +1,44 @@
 import java.io.*;
+import java.util.Scanner;
+import javax.swing.*;
 
 public class GameState {
     private boolean gameOver;
+    private Scanner scanner;
 
     public void initialize() {
         gameOver = false;
+        scanner = new Scanner(System.in);
     }
 
     public boolean isGameOver() {
         return gameOver;
     }
 
-    /**
-     * 解析玩家输入，并转换为 SMCDEL 查询（包含完整的模型）
-     */
-    public String translateToSMCDEL(String playerAction) {
+    public String getAssertionPrompt() {
+        return "请选择逻辑断言类型：\n1. TRUE? \n2. VALID? \n3. WHERE?";
+    }
+
+    public String translateToSMCDEL(String playerAction, String assertionType) {
         if (playerAction == null || playerAction.trim().isEmpty()) {
             return null;
         }
 
-        // SMCDEL 变量和规则
+        String assertionKeyword;
+        switch (assertionType) {
+            case "TRUE?":
+                assertionKeyword = "TRUE?";
+                break;
+            case "VALID?":
+                assertionKeyword = "VALID?";
+                break;
+            case "WHERE?":
+                assertionKeyword = "WHERE?";
+                break;
+            default:
+                assertionKeyword = "TRUE?";
+        }
+
         String baseSMCDEL = "VARS 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17\n" +
                 "LAW\n" +
                 "  ( (1 -> ~2) & (4 -> (13 & 16)) & (7 -> (6 -> 3)) & (8 -> (1 & ~7)) & (9 -> ~3) &\n" +
@@ -32,31 +51,24 @@ public class GameState {
                 "  hamilton: 6,11\n" +
                 "  stone: 3,7,15\n";
 
-        // 生成 SMCDEL 查询
-        return baseSMCDEL + "\nTRUE?\n  {}\n  " + playerAction.trim();
+        return baseSMCDEL + "\n" + assertionKeyword + "\n  {}\n  " + playerAction.trim();
     }
 
-    /**
-     * 运行 SMCDEL 工具，并返回推理结果
-     */
     public String callSMCDEL(String smcdelQuery) {
         if (smcdelQuery == null || smcdelQuery.trim().isEmpty()) {
             return "当前逻辑公式无法被验证，请重新输入。";
         }
 
         try {
-            // 将查询写入文件
             File queryFile = new File("GameQuery.smcdel.txt");
             FileWriter writer = new FileWriter(queryFile);
             writer.write(smcdelQuery);
             writer.close();
 
-            // 调用 SMCDEL 运行工具
             ProcessBuilder pb = new ProcessBuilder("./smcdel", "GameQuery.smcdel.txt");
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
-            // 读取输出
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             StringBuilder output = new StringBuilder();
             String line;
@@ -64,7 +76,7 @@ public class GameState {
 
             while ((line = reader.readLine()) != null) {
                 if (!line.contains("SMCDEL") && !line.contains("Doei!") && !line.trim().isEmpty()) {
-                    line = line.replaceAll("\\u001B\\[[;\\d]*m", ""); // 过滤 ANSI 颜色代码
+                    line = line.replaceAll("\\u001B\\[[;\\d]*m", "");
                     output.append(line).append("\n");
                     validResponse = true;
                 }
@@ -87,9 +99,6 @@ public class GameState {
         }
     }
 
-    /**
-     * 更新游戏状态
-     */
     public void updateState(String smcdelOutput) {
         if (smcdelOutput.contains("True")) {
             smcdelOutput = smcdelOutput.replace("True", "该命题为真！你发现了一条重要线索。");
@@ -97,7 +106,6 @@ public class GameState {
             smcdelOutput = smcdelOutput.replace("False", "该命题为假！需要更多证据支持。");
         }
 
-        // 判断是否进入游戏结束状态
         if (smcdelOutput.contains("Stone 被揭露")) {
             System.out.println("你成功揭露了 Stone 的罪行！正义结局达成。");
             gameOver = true;
