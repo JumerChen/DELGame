@@ -1,6 +1,9 @@
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
 public class GameState {
     private boolean gameOver;
@@ -13,27 +16,20 @@ public class GameState {
         return gameOver;
     }
 
-    public String translateToSMCDEL(String playerAction, String assertionType) {
-        if (playerAction == null || playerAction.trim().isEmpty()) {
+    public String translateToSMCDEL(String[] playerActions, String assertionType) {
+        if (playerActions == null || playerActions.length == 0) {
             return null;
         }
 
         String assertionKeyword;
         switch (assertionType) {
-            case "TRUE?":
-                assertionKeyword = "TRUE?";
-                break;
-            case "VALID?":
-                assertionKeyword = "VALID?";
-                break;
-            case "WHERE?":
-                assertionKeyword = "WHERE?";
-                break;
-            default:
-                assertionKeyword = "TRUE?";
+            case "TRUE?": assertionKeyword = "TRUE?"; break;
+            case "VALID?": assertionKeyword = "VALID?"; break;
+            case "WHERE?": assertionKeyword = "WHERE?"; break;
+            default: assertionKeyword = "TRUE?";
         }
 
-        String baseSMCDEL =
+        StringBuilder baseSMCDEL = new StringBuilder(
                 "VARS 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17\n" +
                         "LAW\n" +
                         "  ( (1 -> ~2) & (4 -> (13 & 16)) & (7 -> (6 -> 3)) & (8 -> (1 & ~7)) & (9 -> ~3) &\n" +
@@ -44,9 +40,15 @@ public class GameState {
                         "  claire: 4,12,16\n" +
                         "  victor: 5,9,10\n" +
                         "  hamilton: 6,11\n" +
-                        "  stone: 3,7,15\n";
+                        "  stone: 3,7,15\n"
+        );
 
-        return baseSMCDEL + "\n" + assertionKeyword + "\n  {}\n  " + playerAction.trim();
+        baseSMCDEL.append("\n").append(assertionKeyword).append("\n").append("  {}\n");
+        for (String action : playerActions) {
+            baseSMCDEL.append("  ").append(action.trim()).append("\n");
+        }
+
+        return baseSMCDEL.toString();
     }
 
     public String callSMCDEL(String smcdelQuery) {
@@ -55,18 +57,15 @@ public class GameState {
         }
 
         try {
-            // 将 SMCDEL 查询写入文件
             File queryFile = new File("GameQuery.smcdel.txt");
             FileWriter writer = new FileWriter(queryFile);
             writer.write(smcdelQuery);
             writer.close();
 
-            // 运行 SMCDEL 工具（假设 `smcdel` 是可执行文件）
             ProcessBuilder pb = new ProcessBuilder("./smcdel", "GameQuery.smcdel.txt");
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
-            // 读取 SMCDEL 输出
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             StringBuilder output = new StringBuilder();
             String line;
@@ -74,7 +73,7 @@ public class GameState {
 
             while ((line = reader.readLine()) != null) {
                 if (!line.contains("SMCDEL") && !line.contains("Doei!") && !line.trim().isEmpty()) {
-                    line = line.replaceAll("\\u001B\\[[;\\d]*m", ""); // 过滤 ANSI 颜色代码
+                    line = line.replaceAll("\\u001B\\[[;\\d]*m", "");
                     output.append(line).append("\n");
                     validResponse = true;
                 }
@@ -117,7 +116,7 @@ public class GameState {
         variableDescriptions.put("16", "Stone 是否试图嫁祸 Claire");
         variableDescriptions.put("17", "房门是否被外部反锁");
 
-        String parsedOutput = smcdelOutput;  // 默认使用原始输出
+        String parsedOutput = smcdelOutput;
 
         if (smcdelOutput.contains("Is K ")) {
             String[] parts = smcdelOutput.split("\\?");
@@ -125,8 +124,8 @@ public class GameState {
                 String fact = parts[0].replace("Is K ", "").trim();
                 String[] factParts = fact.split(" ");
                 if (factParts.length >= 2) {
-                    String agent = factParts[0]; // 角色
-                    String variable = factParts[1]; // 变量编号
+                    String agent = factParts[0];
+                    String variable = factParts[1];
                     String description = variableDescriptions.getOrDefault(variable, "未知变量");
 
                     if (parts[1].trim().equals("True")) {
@@ -142,8 +141,8 @@ public class GameState {
                 String fact = parts[0].replace("Is Kw ", "").trim();
                 String[] factParts = fact.split(" ");
                 if (factParts.length >= 2) {
-                    String agent = factParts[0]; // 角色
-                    String variable = factParts[1]; // 变量编号
+                    String agent = factParts[0];
+                    String variable = factParts[1];
                     String description = variableDescriptions.getOrDefault(variable, "未知变量");
 
                     if (parts[1].trim().equals("True")) {
@@ -163,6 +162,6 @@ public class GameState {
             gameOver = true;
         }
 
-        return parsedOutput;  // 返回解析后的文本，让UI使用它
+        return parsedOutput;
     }
 }
