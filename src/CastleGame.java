@@ -108,7 +108,9 @@ public class CastleGame {
             inputArea.requestFocus();
 
             if (gameState.isGameOver()) {
-                outputArea.append("游戏结束！感谢参与。\n");
+                if (!parsedOutput.contains("游戏结束！感谢参与。")) {
+                    outputArea.append("游戏结束！感谢参与。\n");
+                }
                 inputArea.setEnabled(false);
                 submitButton.setEnabled(false);
                 assertionTypeBox.setEnabled(false);

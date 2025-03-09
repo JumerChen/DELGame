@@ -45,14 +45,14 @@ public class GameState {
 
         baseSMCDEL.append("\n").append(assertionKeyword).append("\n");
 
-        if (assertionKeyword.equals("VALID?")) {
-            String combinedAction = String.join(" ", playerActions).replace("\n", " ").trim();
-            baseSMCDEL.append("  ").append(combinedAction).append("\n");
-        } else {
+        // 在TRUE?和WHERE?查询中必须有空{}
+        if (assertionKeyword.equals("TRUE?") || assertionKeyword.equals("WHERE?")) {
             baseSMCDEL.append("  {}\n");
-            for (String action : playerActions) {
-                baseSMCDEL.append("  ").append(action.trim()).append("\n");
-            }
+        }
+
+        // 无论TRUE?或VALID?或WHERE?，均允许多行公告，并保持格式不变
+        for (String action : playerActions) {
+            baseSMCDEL.append("  ").append(action.trim()).append("\n");
         }
 
         return baseSMCDEL.toString();
@@ -103,12 +103,12 @@ public class GameState {
     }
 
     public String updateState(String smcdelOutput) {
-        String outputNormalized = smcdelOutput.replaceAll("\\s+", "");
+        String outputNormalized = smcdelOutput.replaceAll("\\s+", "").toLowerCase();
 
         boolean crimeExposed =
-                outputNormalized.contains("IsKstone13trueat[]?True") ||
-                        outputNormalized.contains("IsKstone16trueat[]?True") ||
-                        outputNormalized.contains("IsKstone7trueat[]?True");
+                outputNormalized.contains("kstone13true") ||
+                        outputNormalized.contains("kstone16true") ||
+                        outputNormalized.contains("kstone(13&16)true");
 
         String feedback;
 
@@ -121,10 +121,10 @@ public class GameState {
 
             if (crimeExposed) {
                 gameOver = true;
-                feedback = "推理成功！你成功揭露了 Stone 的罪行！正义结局达成。\n游戏结束！感谢参与。";
+                feedback = "推理成功！你成功揭露了 Stone 的罪行！正义结局达成。";
             } else if (attemptCount >= MAX_ATTEMPTS) {
                 gameOver = true;
-                feedback = "推理成功，但尚未发现关键证据。\n你已用尽所有调查机会。\nStone 逃脱了审判，案件仍未解决。\n游戏结束！感谢参与。";
+                feedback = "推理成功，但尚未发现关键证据。\n你已用尽所有调查机会。\nStone 逃脱了审判，案件仍未解决。";
             } else {
                 feedback = "推理成功，但尚未发现关键证据。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会，请继续调查。";
             }
