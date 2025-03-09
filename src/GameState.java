@@ -1,15 +1,15 @@
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 
 public class GameState {
     private boolean gameOver;
+    private int attemptCount = 0;
+    private final int MAX_ATTEMPTS = 5;
 
     public void initialize() {
         gameOver = false;
+        attemptCount = 0;
     }
 
     public boolean isGameOver() {
@@ -22,7 +22,7 @@ public class GameState {
         }
 
         String assertionKeyword;
-        switch (assertionType) {
+        switch (assertionType.trim()) {
             case "TRUE?": assertionKeyword = "TRUE?"; break;
             case "VALID?": assertionKeyword = "VALID?"; break;
             case "WHERE?": assertionKeyword = "WHERE?"; break;
@@ -43,9 +43,16 @@ public class GameState {
                         "  stone: 3,7,15\n"
         );
 
-        baseSMCDEL.append("\n").append(assertionKeyword).append("\n").append("  {}\n");
-        for (String action : playerActions) {
-            baseSMCDEL.append("  ").append(action.trim()).append("\n");
+        baseSMCDEL.append("\n").append(assertionKeyword).append("\n");
+
+        if (assertionKeyword.equals("VALID?")) {
+            String combinedAction = String.join(" ", playerActions).replace("\n", " ").trim();
+            baseSMCDEL.append("  ").append(combinedAction).append("\n");
+        } else {
+            baseSMCDEL.append("  {}\n");
+            for (String action : playerActions) {
+                baseSMCDEL.append("  ").append(action.trim()).append("\n");
+            }
         }
 
         return baseSMCDEL.toString();
@@ -85,7 +92,6 @@ public class GameState {
             }
 
             String smcdelOutput = output.toString().trim();
-
             if (smcdelOutput.contains("Parse error")) {
                 return "逻辑错误，请检查格式！";
             }
@@ -97,71 +103,40 @@ public class GameState {
     }
 
     public String updateState(String smcdelOutput) {
-        Map<String, String> variableDescriptions = new HashMap<>();
-        variableDescriptions.put("1", "Elsa 是否知道 Bolton 的账册异常");
-        variableDescriptions.put("2", "Bolton 是否知道 Elsa 手中有旧遗嘱");
-        variableDescriptions.put("3", "房门是否被锁");
-        variableDescriptions.put("4", "Claire 是否持有副管家的亲笔信");
-        variableDescriptions.put("5", "Victor 是否在停电时看见某可疑身影");
-        variableDescriptions.put("6", "Hamilton 是否确定副管家的死亡时间");
-        variableDescriptions.put("7", "Stone 是否拥有有效的旧主遗嘱副本");
-        variableDescriptions.put("8", "Elsa 的财务危机是否暴露");
-        variableDescriptions.put("9", "Victor 是否协助 Stone");
-        variableDescriptions.put("10", "是否发现毒药痕迹");
-        variableDescriptions.put("11", "副管家是否公开提到 Stone 的犯罪行为");
-        variableDescriptions.put("12", "Claire 是否知道 Stone 的财务欺诈");
-        variableDescriptions.put("13", "Stone 是否伪造密室证据");
-        variableDescriptions.put("14", "Bolton 是否持有暗道钥匙");
-        variableDescriptions.put("15", "是否发现副管家身上的旧收据");
-        variableDescriptions.put("16", "Stone 是否试图嫁祸 Claire");
-        variableDescriptions.put("17", "房门是否被外部反锁");
+        String outputNormalized = smcdelOutput.replaceAll("\\s+", "");
 
-        String parsedOutput = smcdelOutput;
+        boolean crimeExposed =
+                outputNormalized.contains("IsKstone13trueat[]?True") ||
+                        outputNormalized.contains("IsKstone16trueat[]?True") ||
+                        outputNormalized.contains("IsKstone7trueat[]?True");
 
-        if (smcdelOutput.contains("Is K ")) {
-            String[] parts = smcdelOutput.split("\\?");
-            if (parts.length > 1) {
-                String fact = parts[0].replace("Is K ", "").trim();
-                String[] factParts = fact.split(" ");
-                if (factParts.length >= 2) {
-                    String agent = factParts[0];
-                    String variable = factParts[1];
-                    String description = variableDescriptions.getOrDefault(variable, "未知变量");
+        String feedback;
 
-                    if (parts[1].trim().equals("True")) {
-                        parsedOutput = agent + " **确信** " + description + " 为真！";
-                    } else {
-                        parsedOutput = agent + " **无法确定** " + description + " 为真。";
-                    }
-                }
+        if (smcdelOutput.contains("Parse error")) {
+            feedback = "逻辑错误，请检查格式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。";
+        } else if (smcdelOutput.contains("False")) {
+            feedback = "推理失败，出现矛盾。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。";
+        } else if (smcdelOutput.contains("True")) {
+            attemptCount++;
+
+            if (crimeExposed) {
+                gameOver = true;
+                feedback = "推理成功！你成功揭露了 Stone 的罪行！正义结局达成。\n游戏结束！感谢参与。";
+            } else if (attemptCount >= MAX_ATTEMPTS) {
+                gameOver = true;
+                feedback = "推理成功，但尚未发现关键证据。\n你已用尽所有调查机会。\nStone 逃脱了审判，案件仍未解决。\n游戏结束！感谢参与。";
+            } else {
+                feedback = "推理成功，但尚未发现关键证据。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会，请继续调查。";
             }
-        } else if (smcdelOutput.contains("Is Kw ")) {
-            String[] parts = smcdelOutput.split("\\?");
-            if (parts.length > 1) {
-                String fact = parts[0].replace("Is Kw ", "").trim();
-                String[] factParts = fact.split(" ");
-                if (factParts.length >= 2) {
-                    String agent = factParts[0];
-                    String variable = factParts[1];
-                    String description = variableDescriptions.getOrDefault(variable, "未知变量");
-
-                    if (parts[1].trim().equals("True")) {
-                        parsedOutput = agent + " **能够判断** " + description + " 的真假。";
-                    } else {
-                        parsedOutput = agent + " **无法判断** " + description + " 的真假。";
-                    }
-                }
-            }
+        } else {
+            feedback = "输入格式错误，请检查你的推理公式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。";
         }
 
-        if (smcdelOutput.contains("Stone 被揭露")) {
-            parsedOutput = "你成功揭露了 Stone 的罪行！正义结局达成。";
-            gameOver = true;
-        } else if (smcdelOutput.contains("Stone 逃脱")) {
-            parsedOutput = "Stone 逃脱了审判，案件仍未解决。";
-            gameOver = true;
-        }
+        return feedback;
+    }
 
-        return parsedOutput;
+    private boolean outputContains(String output, String query, String result) {
+        String normalizedQuery = query.replaceAll("\\s+", "") + result;
+        return output.contains(normalizedQuery);
     }
 }
