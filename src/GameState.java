@@ -6,6 +6,13 @@ public class GameState {
     private boolean gameOver;
     private int attemptCount = 0;
     private final int MAX_ATTEMPTS = 5;
+    private String language = "zh";
+
+    public GameState(String language) {
+        this.language = language;
+        gameOver = false;
+        attemptCount = 0;
+    }
 
     public void initialize() {
         gameOver = false;
@@ -45,12 +52,10 @@ public class GameState {
 
         baseSMCDEL.append("\n").append(assertionKeyword).append("\n");
 
-        // 在TRUE?和WHERE?查询中必须有空{}
         if (assertionKeyword.equals("TRUE?") || assertionKeyword.equals("WHERE?")) {
             baseSMCDEL.append("  {}\n");
         }
 
-        // 无论TRUE?或VALID?或WHERE?，均允许多行公告，并保持格式不变
         for (String action : playerActions) {
             baseSMCDEL.append("  ").append(action.trim()).append("\n");
         }
@@ -60,7 +65,7 @@ public class GameState {
 
     public String callSMCDEL(String smcdelQuery) {
         if (smcdelQuery == null || smcdelQuery.trim().isEmpty()) {
-            return "当前逻辑公式无法被验证，请重新输入。";
+            return language.equals("zh") ? "当前逻辑公式无法被验证，请重新输入。" : "Invalid query! Please try again.";
         }
 
         try {
@@ -88,19 +93,21 @@ public class GameState {
             process.waitFor();
 
             if (!validResponse) {
-                return "当前逻辑公式无法被验证，请重新输入。";
+                return language.equals("zh") ? "当前逻辑公式无法被验证，请重新输入。" : "Invalid query! Please try again.";
             }
 
             String smcdelOutput = output.toString().trim();
             if (smcdelOutput.contains("Parse error")) {
-                return "逻辑错误，请检查格式！";
+                return language.equals("zh") ? "逻辑错误，请检查格式！" : "Syntax error! Check the format.";
             }
+
             return smcdelOutput;
         } catch (Exception e) {
             e.printStackTrace();
-            return "发生错误：SMCDEL 运行失败，请检查你的输入。";
+            return language.equals("zh") ? "发生错误：SMCDEL 运行失败，请检查你的输入。" : "Error: SMCDEL execution failed. Check your input.";
         }
     }
+
 
     public String updateState(String smcdelOutput) {
         String outputNormalized = smcdelOutput.replaceAll("\\s+", "").toLowerCase();
@@ -113,30 +120,37 @@ public class GameState {
         String feedback;
 
         if (smcdelOutput.contains("Parse error")) {
-            feedback = "逻辑错误，请检查格式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。";
+            feedback = language.equals("zh") ?
+                    "逻辑错误，请检查格式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
+                    "Logical error! Please check the format. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
         } else if (smcdelOutput.contains("False")) {
-            feedback = "推理失败，出现矛盾。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。";
+            feedback = language.equals("zh") ?
+                    "推理失败，出现矛盾。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
+                    "Reasoning failed, contradiction detected. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
         } else if (smcdelOutput.contains("True")) {
             attemptCount++;
 
             if (crimeExposed) {
                 gameOver = true;
-                feedback = "推理成功！你成功揭露了 Stone 的罪行！正义结局达成。";
+                feedback = language.equals("zh") ?
+                        "推理成功！你成功揭露了 Stone 的罪行！正义结局达成。" :
+                        "Reasoning successful! You have exposed Stone’s crime! Justice has been served.";
             } else if (attemptCount >= MAX_ATTEMPTS) {
                 gameOver = true;
-                feedback = "推理成功，但尚未发现关键证据。\n你已用尽所有调查机会。\nStone 逃脱了审判，案件仍未解决。";
+                feedback = language.equals("zh") ?
+                        "推理成功，但尚未发现关键证据。\n你已用尽所有调查机会。\nStone 逃脱了审判，案件仍未解决。" :
+                        "Reasoning successful, but no key evidence found.\nYou have used all attempts.\nStone has escaped justice.";
             } else {
-                feedback = "推理成功，但尚未发现关键证据。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会，请继续调查。";
+                feedback = language.equals("zh") ?
+                        "推理成功，但尚未发现关键证据。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会，请继续调查。" :
+                        "Reasoning successful, but no key evidence found. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
             }
         } else {
-            feedback = "输入格式错误，请检查你的推理公式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。";
+            feedback = language.equals("zh") ?
+                    "输入格式错误，请检查你的推理公式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
+                    "Input format error! Please check your reasoning formula. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
         }
 
         return feedback;
-    }
-
-    private boolean outputContains(String output, String query, String result) {
-        String normalizedQuery = query.replaceAll("\\s+", "") + result;
-        return output.contains(normalizedQuery);
     }
 }
