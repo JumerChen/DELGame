@@ -46,7 +46,6 @@ public class DELGame {
 
         submitButton.addActionListener(e -> processInput());
 
-        // 右侧信息栏
         JPanel sidePanel = new JPanel();
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
         sidePanel.setPreferredSize(new Dimension(250, 600));
