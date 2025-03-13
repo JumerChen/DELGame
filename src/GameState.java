@@ -93,7 +93,7 @@ public class GameState {
             process.waitFor();
 
             if (!validResponse) {
-                return language.equals("zh") ? "当前逻辑公式无法被验证，请重新输入。" : "Invalid query! Please try again.";
+                return language.equals("zh") ? "当前逻辑断言无法被验证，请重新输入。" : "Invalid assertions! Please try again.";
             }
 
             String smcdelOutput = output.toString().trim();
@@ -121,12 +121,12 @@ public class GameState {
 
         if (smcdelOutput.contains("Parse error")) {
             feedback = language.equals("zh") ?
-                    "逻辑错误，请检查格式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
-                    "Logical error! Please check the format. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
+                    "断言语法错误，请检查格式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
+                    "Assertion parse error! Please check the format. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
         } else if (smcdelOutput.contains("False")) {
             feedback = language.equals("zh") ?
-                    "推理失败，出现矛盾。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
-                    "Reasoning failed, contradiction detected. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
+                    "断言不正确，推理失败。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
+                    "False, reasoning failed. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
         } else if (smcdelOutput.contains("True")) {
             attemptCount++;
 
@@ -139,16 +139,16 @@ public class GameState {
                 gameOver = true;
                 feedback = language.equals("zh") ?
                         "推理成功，但尚未发现关键证据。\n你已用尽所有调查机会。\nStone 逃脱了审判，案件仍未解决。" :
-                        "Reasoning successful, but no key evidence found.\nYou have used all attempts.\nStone has escaped justice.";
+                        "True. reasoning successful, but no key evidence found.\nYou have used all attempts.\nStone has escaped justice.";
             } else {
                 feedback = language.equals("zh") ?
                         "推理成功，但尚未发现关键证据。你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会，请继续调查。" :
-                        "Reasoning successful, but no key evidence found. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
+                        "True. reasoning successful, but no key evidence found. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
             }
         } else {
             feedback = language.equals("zh") ?
                     "输入格式错误，请检查你的推理公式！你还有 " + (MAX_ATTEMPTS - attemptCount) + " 次机会。" :
-                    "Input format error! Please check your reasoning formula. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
+                    "Format error! Please check your logical assertions. You have " + (MAX_ATTEMPTS - attemptCount) + " attempts left.";
         }
 
         return feedback;
