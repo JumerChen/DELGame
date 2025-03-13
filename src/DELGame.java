@@ -19,7 +19,7 @@ public class DELGame {
 
         JFrame frame = new JFrame(language.equals("zh") ? "古堡追凶 - 暴风雨之夜" : "Shadows Over the Castle - Stormy Night");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(1000, 600);
         frame.setLayout(new BorderLayout());
 
         outputArea = new JTextArea();
@@ -45,6 +45,18 @@ public class DELGame {
         frame.add(inputPanel, BorderLayout.SOUTH);
 
         submitButton.addActionListener(e -> processInput());
+
+        // 右侧信息栏
+        JPanel sidePanel = new JPanel();
+        sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
+        sidePanel.setPreferredSize(new Dimension(250, 600));
+        JTextArea infoArea = new JTextArea(getSidePanelContent());
+        infoArea.setEditable(false);
+        infoArea.setLineWrap(true);
+        infoArea.setWrapStyleWord(true);
+        JScrollPane infoScrollPane = new JScrollPane(infoArea);
+        sidePanel.add(infoScrollPane);
+        frame.add(sidePanel, BorderLayout.EAST);
 
         frame.setVisible(true);
         showGameIntroduction();
@@ -75,14 +87,6 @@ public class DELGame {
                         "案发现场房门从内反锁，死因疑似窒息或中毒——一个典型的密室杀人案件。\n" +
                         "六位嫌疑人各怀秘密，而真相隐藏在他们的言行和证据之中。\n" +
 
-                        "【主要登场人物】\n" +
-                        "▶ Elsa - 古堡主人，远亲继承者，面临财务危机。\n" +
-                        "▶ Bolton - 古堡的管家，古堡中资历最深的仆从。\n" +
-                        "▶ Claire - 副管家的朋友，不知为和出现在案发之夜，持有某封重要信件。\n" +
-                        "▶ Victor - 保镖，古堡的安全顾问。\n" +
-                        "▶ Hamilton - 古堡的私人医生，负责 Elsa 的旧疾。\n" +
-                        "▶ Stone - 古堡主人的法律顾问，协助遗产纠纷的代理人。\n\n" +
-
                         "游戏基于动态认知逻辑（DEL）推动，接下来将介绍其基本的语法及游戏规则。\n\n" +
 
                         "【断言类型】\n" +
@@ -90,26 +94,6 @@ public class DELGame {
                         "▶ `VALID?` 公开信息\n" +
                         "▶ `WHERE?` 查询符合条件的情况\n" +
                         "▶ 使用公告 `!` 让角色获知新信息\n\n" +
-
-                        "【初始变量】\n" +
-                        "在游戏中，以下 17 个变量决定了案件的真相，你可以通过编写逻辑断言查询它们的真伪：\n\n" +
-                        "  1- Elsa 是否知道 Bolton 的账册异常\n" +
-                        "  2- Bolton 是否知道 Elsa 手中有旧遗嘱\n" +
-                        "  3- 房门是否被锁\n" +
-                        "  4- Claire 是否持有副管家的亲笔信\n" +
-                        "  5- Victor 是否在停电时看见某可疑身影\n" +
-                        "  6- Hamilton 是否确定副管家的死亡时间\n" +
-                        "  7- Stone 是否拥有有效的旧主遗嘱副本\n" +
-                        "  8- Elsa 的财务危机是否暴露\n" +
-                        "  9- Victor 是否协助 Stone\n" +
-                        "  10- 是否发现毒药痕迹\n" +
-                        "  11- 副管家是否公开提到 Stone 的犯罪行为\n" +
-                        "  12- Claire 是否知道 Stone 的财务欺诈\n" +
-                        "  13- Stone 是否伪造密室证据\n" +
-                        "  14- Bolton 是否持有暗道钥匙\n" +
-                        "  15- 是否发现副管家身上的旧收据\n" +
-                        "  16- Stone 是否试图嫁祸 Claire\n" +
-                        "  17- 房门是否被外部反锁\n\n" +
 
                         "【公告知识示例】\n" +
                         "`VALID? [! claire knows whether 4] claire knows that 4`\n" +
@@ -123,15 +107,7 @@ public class DELGame {
                         "The crime scene is a classic locked-room case— the door was locked from the inside, and the cause of death is suspected to be suffocation or poisoning.\n\n" +
                         "Six suspects, each harboring secrets, hold the key to the truth hidden within their words and actions.\n" +
 
-                        "Main Characters\n" +
-                        "▶ Elsa - The castle owner, a distant heir facing financial crisis.\n" +
-                        "▶ Bolton - The castle's butler, the most senior servant in the estate.\n" +
-                        "▶ Claire - A friend of the deputy butler, unexpectedly present on the night of the crime, holding an important letter.\n" +
-                        "▶ Victor - The bodyguard, serving as the castle’s security advisor.\n" +
-                        "▶ Hamilton - The castle’s private doctor, responsible for treating Elsa’s chronic illness.\n" +
-                        "▶ Stone - The castle owner’s legal consultant, acting as the representative in inheritance disputes.\n\n" +
-
-                        "The game progresses using Dynamic Epistemic Logic (DEL), and below is an introduction to its syntax and gameplay mechanics.\n\n" +
+                        "The game uses Dynamic Epistemic Logic (DEL), and below is an introduction to its syntax and gameplay mechanics.\n\n" +
 
                         "Assertion Types\n" +
                         "▶ `TRUE? {}` to confirm facts\n" +
@@ -139,34 +115,69 @@ public class DELGame {
                         "▶ `WHERE?` to query conditions\n" +
                         "▶ Use announcement `!` to make characters aware of new information\n\n" +
 
-
-                        "Initial Variables\n" +
-                        "The following 17 variables determine the truth of the case. You can query them:\n\n" +
-
-                        "  1- Does Elsa know about Bolton’s account anomalies?\n" +
-                        "  2- Does Bolton know Elsa has an old will?\n" +
-                        "  3- Was the room locked?\n" +
-                        "  4- Does Claire possess the deputy butler’s handwritten letter?\n" +
-                        "  5- Did Victor see a suspicious figure during the blackout?\n" +
-                        "  6- Can Hamilton confirm the deputy butler’s time of death?\n" +
-                        "  7- Does Stone have a valid copy of the old master’s will?\n" +
-                        "  8- Has Elsa’s financial crisis been exposed?\n" +
-                        "  9- Did Victor assist Stone?\n" +
-                        "  10- Was poison residue discovered?\n" +
-                        "  11- Did the deputy butler publicly accuse Stone?\n" +
-                        "  12- Does Claire know about Stone’s financial fraud?\n" +
-                        "  13- Did Stone forge evidence for a locked room?\n" +
-                        "  14- Does Bolton have the secret passage key?\n" +
-                        "  15- Was an old receipt found on the deputy butler?\n" +
-                        "  16- Did Stone try to frame Claire?\n" +
-                        "  17- Was the room locked from the outside?\n\n" +
-
                         "Announcement Examples\n" +
                         "`VALID? [! claire knows whether 4] claire knows that 4`\n" +
                         "`TRUE? [! claire knows whether 4] stone knows whether 7`\n" +
                         "`WHERE? [?! claire knows whether (4 & 12)] claire knows that (4 & 12)`\n\n" +
                         "Enter your first reasoning formula to start the investigation!";
         outputArea.append(introduction + "\n");
+    }
+
+    private String getSidePanelContent() {
+        return language.equals("zh") ?
+                "【重要信息】\n" +
+                        "【主要登场人物】\n"+
+                        "▶ Elsa - 古堡主人，远亲继承者，面临财务危机。\n" +
+                        "▶ Bolton - 古堡的管家，古堡中资历最深的仆从。\n" +
+                        "▶ Claire - 副管家的朋友，不知为何出现在案发之夜，持有某封重要信件。\n" +
+                        "▶ Victor - 保镖，古堡的安全顾问。\n" +
+                        "▶ Hamilton - 古堡的私人医生，负责 Elsa 的旧疾。\n" +
+                        "▶ Stone - 古堡主人的法律顾问，协助遗产纠纷的代理人。\n\n" +
+                        "【初始变量】\n" +
+                        "1- Elsa 是否知道 Bolton 的账册异常\n" +
+                        "2- Bolton 是否知道 Elsa 手中有旧遗嘱\n" +
+                        "3- 房门是否被锁\n" +
+                        "4- Claire 是否持有副管家的亲笔信\n" +
+                        "5- Victor 是否在停电时看见某可疑身影\n" +
+                        "6- Hamilton 是否确定副管家的死亡时间\n" +
+                        "7- Stone 是否拥有有效的旧主遗嘱副本\n" +
+                        "8- Elsa 的财务危机是否暴露\n" +
+                        "9- Victor 是否协助 Stone\n" +
+                        "10- 是否发现毒药痕迹\n" +
+                        "11- 副管家是否公开提到 Stone 的犯罪行为\n" +
+                        "12- Claire 是否知道 Stone 的财务欺诈\n" +
+                        "13- Stone 是否伪造密室证据\n" +
+                        "14- Bolton 是否持有暗道钥匙\n" +
+                        "15- 是否发现副管家身上的旧收据\n" +
+                        "16- Stone 是否试图嫁祸 Claire\n" +
+                        "17- 房门是否被外部反锁"
+                :
+                "Key Info\n" +
+                        "Main Characters\n" +
+                        "▶ Elsa - The castle owner, a distant heir facing financial crisis.\n" +
+                        "▶ Bolton - The castle's butler, the most senior servant in the estate.\n" +
+                        "▶ Claire - A friend of the deputy butler, unexpectedly present on the night of the crime, holding an important letter.\n" +
+                        "▶ Victor - The bodyguard, serving as the castle’s security advisor.\n" +
+                        "▶ Hamilton - The castle’s private doctor, responsible for treating Elsa’s chronic illness.\n" +
+                        "▶ Stone - The castle owner’s legal consultant, acting as the representative in inheritance disputes.\n\n" +
+                        "Initial Variables\n" +
+                        "1- Does Elsa know about Bolton’s account anomalies?\n" +
+                        "2- Does Bolton know Elsa has an old will?\n" +
+                        "3- Was the room locked?\n" +
+                        "4- Does Claire possess the deputy butler’s handwritten letter?\n" +
+                        "5- Did Victor see a suspicious figure during the blackout?\n" +
+                        "6- Can Hamilton confirm the deputy butler’s time of death?\n" +
+                        "7- Does Stone have a valid copy of the old master’s will?\n" +
+                        "8- Has Elsa’s financial crisis been exposed?\n" +
+                        "9- Did Victor assist Stone?\n" +
+                        "10- Was poison residue discovered?\n" +
+                        "11- Did the deputy butler publicly accuse Stone?\n" +
+                        "12- Does Claire know about Stone’s financial fraud?\n" +
+                        "13- Did Stone forge evidence for a locked room?\n" +
+                        "14- Does Bolton have the secret passage key?\n" +
+                        "15- Was an old receipt found on the deputy butler?\n" +
+                        "16- Did Stone try to frame Claire?\n" +
+                        "17- Was the room locked from the outside?";
     }
 
     private void processInput() {
