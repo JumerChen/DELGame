@@ -74,7 +74,17 @@ public class DELGame {
                         "副管家，这座古堡中掌管财务记录与古堡主人遗产信息的关键人物，被发现死于书房。\n" +
                         "案发现场房门从内反锁，死因疑似窒息或中毒——一个典型的密室杀人案件。\n" +
                         "六位嫌疑人各怀秘密，而真相隐藏在他们的言行和证据之中。\n" +
+
+                        "【主要登场人物】\n" +
+                        "▶ Elsa - 古堡主人，远亲继承者，面临财务危机。\n" +
+                        "▶ Bolton - 古堡的管家，古堡中资历最深的仆从。\n" +
+                        "▶ Claire - 副管家的朋友，不知为和出现在案发之夜，持有某封重要信件。\n" +
+                        "▶ Victor - 保镖，古堡的安全顾问。\n" +
+                        "▶ Hamilton - 古堡的私人医生，负责 Elsa 的旧疾。\n" +
+                        "▶ Stone - 古堡主人的法律顾问，协助遗产纠纷的代理人。\n\n" +
+
                         "游戏基于动态认知逻辑（DEL）推动，接下来将介绍其基本的语法及游戏规则。\n\n" +
+
                         "【断言类型】\n" +
                         "▶ `TRUE? {}` 确认事实\n" +
                         "▶ `VALID?` 公开信息\n" +
@@ -83,7 +93,6 @@ public class DELGame {
 
                         "【初始变量】\n" +
                         "在游戏中，以下 17 个变量决定了案件的真相，你可以通过编写逻辑断言查询它们的真伪：\n\n" +
-
                         "  1- Elsa 是否知道 Bolton 的账册异常\n" +
                         "  2- Bolton 是否知道 Elsa 手中有旧遗嘱\n" +
                         "  3- 房门是否被锁\n" +
@@ -113,7 +122,17 @@ public class DELGame {
                         "The deputy butler, the key figure managing financial records and the estate of the castle’s owner, has been found dead in the study.\n" +
                         "The crime scene is a classic locked-room case— the door was locked from the inside, and the cause of death is suspected to be suffocation or poisoning.\n\n" +
                         "Six suspects, each harboring secrets, hold the key to the truth hidden within their words and actions.\n" +
+
+                        "Main Characters\n" +
+                        "▶ Elsa - The castle owner, a distant heir facing financial crisis.\n" +
+                        "▶ Bolton - The castle's butler, the most senior servant in the estate.\n" +
+                        "▶ Claire - A friend of the deputy butler, unexpectedly present on the night of the crime, holding an important letter.\n" +
+                        "▶ Victor - The bodyguard, serving as the castle’s security advisor.\n" +
+                        "▶ Hamilton - The castle’s private doctor, responsible for treating Elsa’s chronic illness.\n" +
+                        "▶ Stone - The castle owner’s legal consultant, acting as the representative in inheritance disputes.\n\n" +
+
                         "The game progresses using Dynamic Epistemic Logic (DEL), and below is an introduction to its syntax and gameplay mechanics.\n\n" +
+
                         "Assertion Types\n" +
                         "▶ `TRUE? {}` to confirm facts\n" +
                         "▶ `VALID?` to publicly reveal information\n" +
